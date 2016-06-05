@@ -24,47 +24,51 @@ namespace SharePointPnP.PowerShell.Commands.Branding
     [CmdletHelp("Generates a provisioning template from a web",
         Category = CmdletHelpCategory.Branding)]
     [CmdletExample(
-       Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml",
-       Remarks = "Extracts a provisioning template in XML format from the current web.",
+       Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp",
+       Remarks = "Extracts a provisioning template in Office Open XML from the current web.",
        SortOrder = 1)]
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -Schema V201503",
-        Remarks = "Extracts a provisioning template in XML format from the current web and saves it in the V201503 version of the schema.",
-        SortOrder = 2)]
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml",
+       Remarks = "Extracts a provisioning template in XML format from the current web.",
+       SortOrder = 2)]
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -IncludeAllTermGroups",
-        Remarks = "Extracts a provisioning template in XML format from the current web and includes all term groups, term sets and terms from the Managed Metadata Service Taxonomy.",
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -Schema V201503",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web and saves it in the V201503 version of the schema.",
         SortOrder = 3)]
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -IncludeSiteCollectionTermGroup",
-        Remarks = "Extracts a provisioning template in XML format from the current web and includes the term group currently (if set) assigned to the site collection.",
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -IncludeAllTermGroups",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web and includes all term groups, term sets and terms from the Managed Metadata Service Taxonomy.",
         SortOrder = 4)]
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -PersistComposedLookFiles",
-        Remarks = "Extracts a provisioning template in XML format from the current web and saves the files that make up the composed look to the same folder as where the template is saved.",
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -IncludeSiteCollectionTermGroup",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web and includes the term group currently (if set) assigned to the site collection.",
         SortOrder = 5)]
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -Handlers Lists, SiteSecurity",
-        Remarks = "Extracts a provisioning template in XML format from the current web, but only processes lists and site security when generating the template.",
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -PersistComposedLookFiles",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web and saves the files that make up the composed look to the same folder as where the template is saved.",
         SortOrder = 6)]
+    [CmdletExample(
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -Handlers Lists, SiteSecurity",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web, but only processes lists and site security when generating the template.",
+        SortOrder = 7)]
     [CmdletExample(
         Code = @"
 PS:> $handler1 = New-SPOExtensibilityHandlerObject -Assembly Contoso.Core.Handlers -Type Contoso.Core.Handlers.MyExtensibilityHandler1
 PS:> $handler2 = New-SPOExtensibilityHandlerObject -Assembly Contoso.Core.Handlers -Type Contoso.Core.Handlers.MyExtensibilityHandler1
 PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $handler1,$handler2",
         Remarks = @"This will create two new ExtensibilityHandler objects that are run during extraction of the template",
-        SortOrder = 7)]
+        SortOrder = 8)]
 #if !SP2013
     [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -PersistMultiLanguageResources",
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -PersistMultiLanguageResources",
         Introduction = "Only supported on SP2016 and SP Online",
-        Remarks = "Extracts a provisioning template in XML format from the current web, and for supported artifacts it will create a resource file for each supported language (based upon the language settings of the current web). The generated resource files will be named after the value specified in the Out parameter. For instance if the Out parameter is specified as -Out 'template.xml' the generated resource file will be called 'template.en-US.resx'.",
-        SortOrder = 8)]
-    [CmdletExample(
-        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.xml -PersistMultiLanguageResources -ResourceFilePrefix MyResources",
-        Introduction = "Only supported on SP2016 and SP Online",
-        Remarks = "Extracts a provisioning template in XML format from the current web, and for supported artifacts it will create a resource file for each supported language (based upon the language settings of the current web). The generated resource files will be named 'MyResources.en-US.resx' etc.",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web, and for supported artifacts it will create a resource file for each supported language (based upon the language settings of the current web). The generated resource files will be named after the value specified in the Out parameter. For instance if the Out parameter is specified as -Out 'template.xml' the generated resource file will be called 'template.en-US.resx'.",
         SortOrder = 9)]
+    [CmdletExample(
+        Code = @"PS:> Get-SPOProvisioningTemplate -Out template.pnp -PersistMultiLanguageResources -ResourceFilePrefix MyResources",
+        Introduction = "Only supported on SP2016 and SP Online",
+        Remarks = "Extracts a provisioning template in Office Open XML from the current web, and for supported artifacts it will create a resource file for each supported language (based upon the language settings of the current web). The generated resource files will be named 'MyResources.en-US.resx' etc.",
+        SortOrder = 10)]
 #endif
 
     public class GetProvisioningTemplate : SPOWebCmdlet
@@ -127,6 +131,10 @@ PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $ha
 
         protected override void ExecuteCmdlet()
         {
+            if(PersistMultiLanguageResources == false && ResourceFilePrefix != null)
+            {
+                WriteWarning("In order to export resource files, also specify the PersistMultiLanguageResources switch");
+            }
             if (!string.IsNullOrEmpty(Out))
             {
                 if (!Path.IsPathRooted(Out))
@@ -137,27 +145,21 @@ PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $ha
                 {
                     if (Force || ShouldContinue(string.Format(Resources.File0ExistsOverwrite, Out), Resources.Confirm))
                     {
-                        var xml = GetProvisioningTemplateXML(Schema, new FileInfo(Out).DirectoryName);
-
-                        File.WriteAllText(Out, xml, Encoding);
+                        ExtractTemplate(Schema, new FileInfo(Out).DirectoryName, new FileInfo(Out).Name);
                     }
                 }
                 else
                 {
-                    var xml = GetProvisioningTemplateXML(Schema, new FileInfo(Out).DirectoryName);
-
-                    File.WriteAllText(Out, xml, Encoding);
+                    ExtractTemplate(Schema, new FileInfo(Out).DirectoryName, new FileInfo(Out).Name);
                 }
             }
             else
             {
-                var xml = GetProvisioningTemplateXML(Schema, SessionState.Path.CurrentFileSystemLocation.Path);
-
-                WriteObject(xml);
+                ExtractTemplate(Schema, SessionState.Path.CurrentFileSystemLocation.Path, null);
             }
         }
 
-        private string GetProvisioningTemplateXML(XMLPnPSchemaVersion schema, string path)
+        private void ExtractTemplate(XMLPnPSchemaVersion schema, string path, string packageName)
         {
             SelectedWeb.EnsureProperty(w => w.Url);
 
@@ -179,21 +181,41 @@ PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $ha
                 creationInformation.HandlersToProcess = Handlers;
             }
 
+            var extension = "";
+            if (packageName != null)
+            {
+                if (packageName.IndexOf(".") > -1)
+                {
+                    extension = packageName.Substring(packageName.LastIndexOf(".")).ToLower();
+                }
+                else
+                {
+                    packageName += ".pnp";
+                    extension = ".pnp";
+                }
+            }
+
+            if (extension == ".pnp")
+            {
+                var fileSystemConnector = new FileSystemConnector(path, "");
+                creationInformation.FileConnector = new OpenXMLConnector(packageName, fileSystemConnector);
+            }
             creationInformation.PersistBrandingFiles = PersistBrandingFiles || PersistComposedLookFiles;
             creationInformation.PersistPublishingFiles = PersistPublishingFiles;
             creationInformation.IncludeNativePublishingFiles = IncludeNativePublishingFiles;
             creationInformation.IncludeSiteGroups = IncludeSiteGroups;
 #if !SP2013
             creationInformation.PersistMultiLanguageResources = PersistMultiLanguageResources;
-            if(!string.IsNullOrEmpty(ResourceFilePrefix))
+            if (!string.IsNullOrEmpty(ResourceFilePrefix))
             {
                 creationInformation.ResourceFilePrefix = ResourceFilePrefix;
-            } else
+            }
+            else
             {
                 if (Out != null)
                 {
                     FileInfo fileInfo = new FileInfo(Out);
-                    var prefix = fileInfo.Name.Substring(0,fileInfo.Name.LastIndexOf("."));
+                    var prefix = fileInfo.Name.Substring(0, fileInfo.Name.LastIndexOf("."));
                     creationInformation.ResourceFilePrefix = prefix;
                 }
 
@@ -203,7 +225,6 @@ PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $ha
             {
                 creationInformation.ExtensibilityHandlers = ExtensibilityHandlers.ToList<ExtensibilityHandler>();
             }
-            creationInformation.FileConnector = new FileSystemConnector(path, "");
 
 #pragma warning disable CS0618 // Type or member is obsolete
             if (NoBaseTemplate)
@@ -273,11 +294,30 @@ PS:> Get-SPOProvisioningTemplate -Out NewTemplate.xml -ExtensibilityHandlers $ha
                         break;
                     }
             }
-            var _outputStream = formatter.ToFormattedTemplate(template);
-            StreamReader reader = new StreamReader(_outputStream);
 
-            return reader.ReadToEnd();
+            if (extension == ".pnp")
+            {
+                XMLTemplateProvider provider = new XMLOpenXMLTemplateProvider(
 
+                      creationInformation.FileConnector as OpenXMLConnector);
+                var templateFileName = packageName.Substring(0, packageName.LastIndexOf(".")) + ".xml";
+
+                provider.SaveAs(template, templateFileName, formatter);
+            }
+            else
+            {
+
+                var _outputStream = formatter.ToFormattedTemplate(template);
+                StreamReader reader = new StreamReader(_outputStream);
+                if (Out != null)
+                {
+                    File.WriteAllText(Path.Combine(path, packageName), reader.ReadToEnd(), Encoding);
+                }
+                else
+                {
+                    WriteObject(reader.ReadToEnd());
+                }
+            }
         }
     }
 }
